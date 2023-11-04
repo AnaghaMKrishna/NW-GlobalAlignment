@@ -1,0 +1,1 @@
+from magnumopus.ispcr import ispcr
