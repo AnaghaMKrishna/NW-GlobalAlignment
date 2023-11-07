@@ -5,22 +5,23 @@ import argparse
 
 def reverse_complement(string:str) -> str:
     """
-    Generate the complement of the string using complement_dict
+    Generate the reverse complement of the string using complement_dict
 
     Args:
-        string : string to be complemented
+        string : string to be reverse complemented
 
     Returns:
-        The complemented string
+        reverse complemented string
     """
     complement_dict = {
     "A":"T",
     "G":"C",
     "T":"A",
     "C":"G"
-}
+    }
     return "".join(complement_dict.get(base) for base in string[::-1])
 
+#accept and parse command-line arguments
 parser = argparse.ArgumentParser(prog="amplicon_align.py", 
                                  description="Perform in-silico PCR on two assemblies and align the amplicons using Needleman-Wunsch global alignment algorithm")
 
@@ -80,9 +81,9 @@ arg_gap = parser.add_argument(
     required=True
 )
 
-# parser.print_help()
 args = parser.parse_args()
 
+#store parsed arguments into variables
 assembly_file1 = args.assembly1
 assembly_file2 = args.assembly2
 primer_file = args.primers
@@ -92,19 +93,19 @@ mismatch = args.mismatch
 gap = args.gap
 
 amplicon1 = magnumopus.ispcr(primer_file, assembly_file1, max_amplicon_size)
-# print(amplicon1)
 amplicon2 = magnumopus.ispcr(primer_file, assembly_file2, max_amplicon_size)
-# print(amplicon2)
+
+# remove headers and new line characters from the generated amplicons
 amplicon1 = amplicon1.lstrip(amplicon1[:amplicon1.index("\n")]).strip()
 amplicon2 = amplicon2.lstrip(amplicon2[:amplicon2.index("\n")]).strip()
 
-# print(f"{amplicon1}\n\n\n{amplicon2}")
-
-
+#check the optimal alignment for amplicons and its reverse complements
 aln1, score1 = magnumopus.needleman_wunsch(amplicon1, amplicon2, match, mismatch, gap)
 aln2, score2 = magnumopus.needleman_wunsch(reverse_complement(amplicon1), amplicon2, match, mismatch, gap)
 aln3, score3 = magnumopus.needleman_wunsch(amplicon1, reverse_complement(amplicon2), match, mismatch, gap)
 aln4, score4 = magnumopus.needleman_wunsch(reverse_complement(amplicon1), reverse_complement(amplicon2), match, mismatch, gap)
+
+#check for maximum score and print the aligned sequences and corresponding score
 max_score = [[score1, aln1], [score2, aln2], [score3, aln3], [score4, aln4]]
 opt_aln = max_score.index(max(max_score))
 print("\n".join(max_score[opt_aln][1]))
