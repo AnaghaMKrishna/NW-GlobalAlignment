@@ -1,22 +1,28 @@
+#!/usr/bin/env python3
+
 import subprocess
 
 PCT_MATCH = 80.00
 
 def ispcr(primer_file: str, assembly_file: str, max_amplicon_size: int) -> str:
-    sorted_good_hits = step_one(
-	primer_file=primer_file,
-	assembly_file=assembly_file
-    )
+    """
+    main function for calling functions to perform isPCR in three steps:
+    1. Identify locations where primers would anneal to the target sequence
+    2. Identify pairs of locations where two primers anneal close enough together and in the correct orientation for amplification to occur
+    3. Extract the amplified sequence
 
-    paired_hits = step_two(
-	sorted_hits=sorted_good_hits,
-	max_amplicon_size=max_amplicon_size
-    )
+    Args:
+        primer_file: path to the pimer file
+        assembly_file: path to the assembly file
+        max_amplicon_size: maximum amplicon required
 
-    amplicons = step_three(
-	hit_pairs=paired_hits,
-	assembly_file=assembly_file
-    )
+    Returns:
+        amplicons that gets amplified in isPCR
+    """
+    sorted_good_hits = step_one(primer_file=primer_file, assembly_file=assembly_file)
+    paired_hits = step_two(sorted_hits=sorted_good_hits, max_amplicon_size=max_amplicon_size)
+    amplicons = step_three(hit_pairs=paired_hits, assembly_file=assembly_file)
+    
     return amplicons
 
 def step_one(primer_file: str, assembly_file: str) -> list[list[str]]:
@@ -65,9 +71,9 @@ def step_three(hit_pairs: list[tuple[list[str]]], assembly_file: str) -> str:
     """
     bed_content = create_bed_file(hit_pairs)
     amplicon = call_seqtk(assembly_file, bed_content)
-    amplicon_formatted = pretty_print(amplicon)
+    # amplicon_formatted = pretty_print(amplicon)
     
-    return amplicon_formatted[:-1] #skip the newline at the end
+    return amplicon[:-1] #skip the newline at the end
 
 def call_blast(primer_file: str, assembly_file: str) -> str:
     """
