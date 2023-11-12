@@ -67,6 +67,9 @@ def fill_matrix(matrix: list[list[int]], seq_a: str, seq_b: str, match: int, mis
                                     (matrix[row][col - 1] + gap), 
                                     (matrix[row - 1][col -1] + match if seq_a_base == seq_b_base else matrix[row - 1][col -1] + mismatch )
                                     )       
+    # for row in matrix:
+    #     print(row)
+
     return matrix
 
 def find_optimal_alignment(matrix: list[list[int]], seq_a: str, seq_b: str, match: int, mismatch: int, gap: int) -> tuple[tuple[str, str], int]:
@@ -92,40 +95,44 @@ def find_optimal_alignment(matrix: list[list[int]], seq_a: str, seq_b: str, matc
     col = len(seq_b)
 
     #traverse the matrix by starting at bottom right-most cell and reach to (0,0)
-    while row > 0:
-        while col > 0:
-            #get the index of max value among diagonal, left and top cells
-            l = [matrix[row-1][col-1], matrix[row][col-1], matrix[row-1][col]]
-            max_pos = l.index(max(l))
-            #for match
-            if max_pos == 0 and matrix[row][col] == matrix[row-1][col-1] + match:
-                aln_b += seq_b[col-1]
-                aln_a += seq_a[row-1]
-                row -= 1
-                col -= 1
-            #for mismatch
-            elif matrix[row][col] == matrix[row-1][col-1] + mismatch:
-                aln_b += seq_b[col-1]
-                aln_a += seq_a[row-1]
-                row -= 1
-                col -= 1
-            #for gap on seq_b
-            elif max_pos == 1 and matrix[row][col] == matrix[row][col-1] + gap:
-                aln_a += "-"
-                aln_b += seq_b[col-1]
-                col -= 1
-            #for gap on seq_a
-            elif max_pos == 2 and matrix[row][col] == matrix[row-1][col] + gap:
-                aln_b += "-"
-                aln_a += seq_a[row-1]
-                row -= 1
-            #default to moving diagonally up
-            else:
-                aln_b += seq_b[col-1]
-                aln_a += seq_a[row-1]
-                row -= 1
-                col -= 1
+    while row > 0 and col > 0:
+        #get the index of max value among diagonal, left and top cells
+        check_max_list = [matrix[row-1][col-1], matrix[row][col-1], matrix[row-1][col]]
+        max_pos = check_max_list.index(max(check_max_list))
+        #for match
+        if max_pos == 0 and matrix[row][col] == matrix[row-1][col-1] + match:
+            aln_b += seq_b[col-1]
+            aln_a += seq_a[row-1]
+            row -= 1
+            col -= 1
+        #for gap on seq_b
+        elif max_pos == 1 and matrix[row][col] == matrix[row][col-1] + gap:
+            aln_a += "-"
+            aln_b += seq_b[col-1]
+            col -= 1
+        #for gap on seq_a
+        elif max_pos == 2 and matrix[row][col] == matrix[row-1][col] + gap:
+            aln_b += "-"
+            aln_a += seq_a[row-1]
+            row -= 1
+        #mismatch
+        else:
+            aln_b += seq_b[col-1]
+            aln_a += seq_a[row-1]
+            row -= 1
+            col -= 1
     #reverse the string before returning
     a = aln_a[::-1]
     b = aln_b[::-1]
     return ((a, b), score)
+
+# if __name__ == "__main__":
+#     a,b = needleman_wunsch("ATA", "ATCA", 1, -1, -1)
+#     print(a)
+#     print(b)
+#     a,b = needleman_wunsch("TAGTCAT", "TATCAAT", 1, -1, -1)
+#     print(a)
+#     print(b)
+#     a,b = needleman_wunsch("CTTCTCGTCGGTCTCGTGGTTCGGGAAC", "CTTTCATCCACTTCGTTGCCCGGGAAC", 1, -1, -1)
+#     print(a)
+#     print(b)
