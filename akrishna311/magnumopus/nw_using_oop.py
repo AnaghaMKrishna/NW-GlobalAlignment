@@ -1,14 +1,17 @@
 #!/usr/bin/env python3
+#Usage: ./nw_using_oop.py -s1=TAGTCAT -s2=TATCAAT --match=1 --mismatch=-1 --gap=-1 --all
 
+import argparse
 class NeedlemanWunsch:
-    def __init__(self, seq_a, seq_b, match, mismatch, gap):
+    def __init__(self, seq_a:str, seq_b:str, match:int, mismatch:int, gap:int, all:bool):
         self.seq_a = seq_a
         self.seq_b = seq_b
         self.match = match
         self.mismatch = mismatch
         self.gap = gap
+        self.all = all
     
-    def NW_alignment(self) -> tuple[tuple[str, str], int]:
+    def NW_alignment(self) -> tuple[tuple[str, str], int] | tuple[list[tuple[str, str], int]]:
         """
         function to implement NW algorithm
 
@@ -24,11 +27,11 @@ class NeedlemanWunsch:
         """
         matrices = self.generate_matrices(len(self.seq_a), len(self.seq_b))
         filled_matrix = self.fill_matrix(score_mat = matrices[0], dir_mat = matrices[1], seq_a = self.seq_a, seq_b = self.seq_b, match = self.match, mismatch = self.mismatch, gap = self.gap)
-        alns, score = self.find_optimal_alignment(score_mat = filled_matrix[0], dir_mat = filled_matrix[1], seq_a = self.seq_a, seq_b = self.seq_b)
+        alns, score = self.find_optimal_alignment(score_mat = filled_matrix[0], dir_mat = filled_matrix[1], seq_a = self.seq_a, seq_b = self.seq_b, all = self.all)
 
         return alns, score
     
-    def generate_matrices(row: int, col: int) -> tuple[list[list[int]], list[list[list[None]]]]:
+    def generate_matrices(self, row: int, col: int) -> tuple[list[list[int]], list[list[list[None]]]]:
         """
         creates two (row + 1) X (col + 1) matrix with each cell as a list.
         extra row and column added to fill in initial values and corresponding direction.
@@ -45,7 +48,7 @@ class NeedlemanWunsch:
 
         return score_mat, dir_mat
 
-    def fill_matrix(score_mat: list[list[int]], dir_mat:list[list[list[int]]], seq_a: str, seq_b: str, match: int, mismatch: int, gap: int) -> tuple[list[list[int]], list[list[list[int]]]]:
+    def fill_matrix(self, score_mat: list[list[int]], dir_mat:list[list[list[int]]], seq_a: str, seq_b: str, match: int, mismatch: int, gap: int) -> tuple[list[list[int]], list[list[list[int]]]]:
         """
         fill the matrix with scores based on the sequence alignment
 
@@ -195,7 +198,7 @@ class NeedlemanWunsch:
                 path -= 1
 
 
-    def find_optimal_alignment(self, score_mat: list[list[int]], dir_mat: list[list[list[int]]], seq_a: str, seq_b: str) -> tuple[list[tuple[str, str], int]]:
+    def find_optimal_alignment(self, score_mat: list[list[int]], dir_mat: list[list[list[int]]], seq_a: str, seq_b: str, all:bool) -> tuple[tuple[str, str], int] | tuple[list[tuple[str, str], int]]:
         """
         find optimal alignment for the sequences using backtracking the score matrix
 
@@ -219,17 +222,67 @@ class NeedlemanWunsch:
         score = score_mat[row][col]
 
         #to get one optimal alignment using recursion
-        # a,b = traverse(cell, path, row, col, aln_a, aln_b, dir_mat, seq_a, seq_b)
-        # return ((a,b), score)
-        
-        #to get all optimal alignments using recursion
-        all_alns = [i for i in self.traverse_all_paths(cell, path, row, col, aln_a, aln_b, dir_mat, seq_a, seq_b)]
-        
-        #uncomment for printing returned alignments
-        # for ele in all_alns:
-        #     print(ele)
+        if all:
+            #to get all optimal alignments using recursion
+            all_alns = [i for i in self.traverse_all_paths(cell, path, row, col, aln_a, aln_b, dir_mat, seq_a, seq_b)]
+            return all_alns, score
+        else:
+            #return only one alignment if --all flag is not set
+            a,b = self.traverse(cell, path, row, col, aln_a, aln_b, dir_mat, seq_a, seq_b)
+            return ((a,b), score)
 
-        return all_alns, score
 
-aln1 = NeedlemanWunsch("TAGTCAT", "TATCAAT", 1, -1, -1)
-print(aln1.NW_alignment())
+parser = argparse.ArgumentParser(prog="nw_using_oop.py", 
+                                 description="Align any two strings using Needleman-Wunsch global alignment algorithm to get one or all optimal alignments")
+
+arg_seq1 = parser.add_argument(
+    "-s1", "--sequence1",
+    help="first DNA sequence to align",
+    dest="seq1",
+    type=str,
+    required=True
+)
+
+arg_seq2 = parser.add_argument(
+    "-s2", "--sequence2",
+    help="second DNA sequence to align",
+    dest="seq2",
+    type=str,
+    required=True
+)
+
+arg_match = parser.add_argument(
+    "--match",
+    help="match score to use in alignment",
+    dest="match",
+    type=int,
+    required=True
+)
+
+arg_mismatch = parser.add_argument(
+    "--mismatch",
+    help="mismatch penalty to use in alignment",
+    dest="mismatch",
+    type=int,
+    required=True
+)
+
+arg_gap = parser.add_argument(
+    "--gap",
+    help="gap penalty to use in alignment",
+    dest="gap",
+    type=int,
+    required=True
+)
+
+arg_one_or_all = parser.add_argument(
+    "--all",
+    help="indicate --all to return all optimal alignments, returns one alignment by default",
+    dest="one_or_all",
+    required=False,
+    action="store_true"
+)
+
+args = parser.parse_args()
+nw = NeedlemanWunsch(seq_a=args.seq1, seq_b=args.seq2, match=args.match, mismatch=args.mismatch, gap=args.gap, all=args.one_or_all)
+print(nw.NW_alignment())
